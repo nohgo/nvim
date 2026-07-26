@@ -672,6 +672,9 @@ require('lazy').setup({
         clangd = {},
         gopls = {},
         pyright = {},
+        verible = {
+          cmd = { 'verible-verilog-ls', '--rules_config_search' },
+        },
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -774,6 +777,9 @@ require('lazy').setup({
         lua = { 'stylua' },
         go = { 'gofmt', 'goimports' },
         c = { 'clang-format' },
+        cpp = { 'clang-format' },
+        verilog = { 'verible' }, -- <-- ADD THIS LINE
+        systemverilog = { 'verible' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -969,7 +975,7 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'verilog' },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
@@ -1002,7 +1008,7 @@ require('lazy').setup({
   -- require 'kickstart.plugins.indent_line',
   -- require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
-  require 'kickstart.plugins.neo-tree',
+  -- require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
