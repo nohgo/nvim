@@ -5,3 +5,8 @@ nvim
 
 spell/
 lazy-lock.json
+
+# Keep the native nvim-pack-lock.json tracked; ignore local editor logs.
+.nvimlog
+nvim.log
+.DS_Store
