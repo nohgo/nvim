@@ -318,6 +318,8 @@ do
         vim.cmd 'TSUpdate'
         return
       end
+
+      if name == 'tree-sitter-verilog-ams' then run_build(name, { 'make', 'build' }, ev.data.path) end
     end,
   })
 end
@@ -838,7 +840,7 @@ do
   require('conform').setup {
     notify_on_error = false,
     format_on_save = function(bufnr)
-      local disable_lsp_format = { c = true, cpp = true }
+      local disable_lsp_format = { c = true, cpp = true, verilogams = true }
       return {
         timeout_ms = 500,
         lsp_format = disable_lsp_format[vim.bo[bufnr].filetype] and 'never' or 'fallback',
@@ -1041,12 +1043,10 @@ do
 
   -- NOTE: You can add your own plugins, configuration, etc. in `lua/custom/plugins/*.lua`.
   --
-  -- For independent modules, uncomment the convenience loader:
+  -- Personal plugins and their explicitly required modules:
   require 'custom.plugins'
   --
-  -- `custom.plugins` automatically loads files from that directory, but their
-  -- order is unspecified. If plugins depend on each other, keep them in the same
-  -- file and put their `vim.pack.add()` and `setup()` calls in the required order.
+  -- Add modules to `custom.plugins` in the order they should load.
   --
   -- If separate modules need a specific order, require them explicitly instead:
   -- require 'custom.plugins.colorscheme'

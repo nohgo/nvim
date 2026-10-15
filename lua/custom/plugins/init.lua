@@ -17,5 +17,5 @@ vim.keymap.set('n', '-', '<CMD>Oil<CR>', { desc = 'Open parent directory' })
 vim.pack.add { 'https://github.com/notjedi/nvim-rooter.lua' }
 require('nvim-rooter').setup {}
 
--- Slang supplies project-aware HDL diagnostics. A separate single-file Verilator
--- check reports missing modules even when Slang resolves them successfully.
+require 'custom.plugins.verilog-ams'
+require 'custom.plugins.cadence'

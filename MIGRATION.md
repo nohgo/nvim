@@ -29,6 +29,40 @@ In the lab project, Slang correctly resolved `clk_div` from `clk_gen.sv` and ret
 
 After restarting Neovim, `gd` on `clk_div` jumps to its definition and `K` shows its module signature. Verilator is still available from the terminal for explicit project-wide linting.
 
+## October 15 follow-up: Verilog-A / AMS
+
+`lua/custom/plugins/verilog-ams.lua` installs `nohgo/tree-sitter-verilog-ams` from
+`main` through native `vim.pack`. The existing `PackChanged` hook runs `make build`
+on installation and updates, before the grammar's setup runs. Builds require
+`make`, a C compiler, and Tree-sitter CLI 0.27.0; Node.js is not needed.
+
+The grammar handles `.va`, `.vams`, and `.vah` as `verilogams`. The existing
+Tree-sitter callback enables highlighting, and the grammar module supplies syntax
+diagnostics. `.v` and `.sv` retain their existing parser and Slang setup. Folding
+keeps the current editor defaults.
+
+The same module registers `vamsfmt` with Conform for manual formatting and the
+existing format-on-save callback. It uses the CLI defaults (two spaces, soft
+100-column width), finds the executable on `PATH` or in `~/.cargo/bin`, and leaves
+Verible's `.v` / `.sv` mappings intact. Install or update the standalone binary
+with `cargo install --git https://github.com/nohgo/vamsfmt.git --branch main --locked`;
+plugin updates do not update it. Rust/Cargo 1.85+, Git, and a C compiler are needed
+to install it. Invalid source remains unchanged when formatting fails.
+
+Set `vim.g.enable_verilog_ams = false` before loading personal plugins to skip the
+integration on a machine. Update it with the usual `vim.pack.update()` workflow,
+then restart Neovim to load the rebuilt parser library.
+
+`lua/custom/plugins/cadence.lua` installs and enables `nohgo/cadence.nvim` only
+when `xmvlog` is executable on the local `PATH`. `vim.g.enable_cadence` reflects
+that check; set it to `false` before personal plugins load to opt out. `xrun` or
+`CDSHOME` alone does not enable it because the plugin requires `xmvlog -ams`.
+Start Neovim from your configured Cadence shell on a licensed host. The plugin's
+defaults check saved `verilogams` files asynchronously after Conform formatting;
+open its error list with `:lua require('cadence').quickfix()`. Add site-specific
+header paths to this module's `setup` options when needed. This Mac has no
+`xmvlog`, so the integration stays disabled here.
+
 ## Routine updates and checks
 
 In a terminal, update Neovim with `brew update` followed by `brew upgrade neovim`. Check the active executable with `nvim --version`.

@@ -83,6 +83,11 @@
       "rev": "cdc07ac78467a233fd62c493de29a17e0cf2b2b6",
       "src": "https://github.com/folke/tokyonight.nvim"
     },
+    "tree-sitter-verilog-ams": {
+      "rev": "0b2672e76ff2941fb62081b5d42b0ae84a0f6c46",
+      "src": "https://github.com/nohgo/tree-sitter-verilog-ams",
+      "version": "'main'"
+    },
     "vimtex": {
       "rev": "bbfa1501287b65e8803d5cc1007db2c2351c4453",
       "src": "https://github.com/lervag/vimtex"
