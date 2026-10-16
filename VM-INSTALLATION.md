@@ -1,8 +1,8 @@
 # School VM: Neovim installation and maintenance
 
-Recorded and verified on **2026-10-06**. This is a snapshot of the Linux installation; update the version numbers and paths here when you change it.
+Originally recorded on **2026-10-06**; updated and verified on **2026-10-15**. This is a snapshot of the Linux installation; update the version numbers and paths here when you change it.
 
-**Addition on 2026-10-15:** Codex CLI was installed separately; see the Codex section at the end. The Neovim inventory above remains the October 6 snapshot.
+**Updates on 2026-10-15:** Pulled the VAMS suite, installed the native AMS formatter, removed the old Lazy rollback directories, and installed Codex CLI separately. See the AMS update and Codex sections below.
 
 SSH destination: `nohgoering@linux.ece.ufl.edu`. The host inspected during installation was `ece-lnx-01`, running **RHEL 8.10, x86_64, glibc 2.28**. Everything added for Neovim is installed under your home directory, without sudo or Conda.
 
@@ -34,10 +34,12 @@ All paths in this table are on the Linux VM.
 | `~/.local/opt/nvim-0.12.5/` | Full Neovim distribution: executable, libraries, runtime, bundled parsers | Manual installation |
 | `~/.local/bin/tree-sitter` | Standalone Tree-sitter CLI built for this VM | Manual installation |
 | `~/.local/bin/rg` | Standalone ripgrep search executable | Manual installation |
+| `~/.local/bin/vamsfmt` | Native Verilog-A/AMS formatter, built from your formatter repository | Manual installation |
 | `~/.local/opt/node-22.23.3/` | Node.js, npm, npx | Manual installation |
 | `~/.local/opt/go-1.27.1/` | Go toolchain | Manual installation |
 | `~/.local/opt/nvim-tools/bin/` | Symlinks exposing Node, Go, and Python to Neovim | Manual installation |
-| `~/.local/share/nvim/site/pack/core/opt/` | 22 Neovim plugins | Native `vim.pack` |
+| `~/.local/share/nvim/site/pack/core/opt/` | 23 Neovim plugins in the current non-Cadence shell | Native `vim.pack` |
+| `~/.local/share/nvim/site/pack/core/opt/tree-sitter-verilog-ams/parser/verilog_ams.so` | Locally compiled AMS syntax parser | AMS plugin's `make build` hook |
 | `~/.config/nvim/nvim-pack-lock.json` | Resolved plugin revisions | Native `vim.pack`, tracked in Git |
 | `~/.local/share/nvim/mason/packages/` | Language servers, formatters, their private dependencies and receipts | Mason |
 | `~/.local/share/nvim/mason/bin/` | Executable links/wrappers for Mason tools | Mason |
@@ -86,6 +88,7 @@ Bash caches executable locations. After replacing or removing an executable, `ha
 | Neovim | 0.12.5 | Older-glibc distribution from the Neovim project's compatibility release repository |
 | Tree-sitter CLI | 0.27.0 | Built on RHEL 8 so it runs with glibc 2.28 |
 | ripgrep | 15.2.0 | Upstream x86_64 musl build, used by search |
+| vamsfmt | 0.1.0 | Built on RHEL 8; source revision `12d74c0f993f078caec5f9175b5ba5cf1ddb1c6a` |
 | Node.js / npm | 22.23.3 / 10.9.9 | Pyright and npm-based Mason installations |
 | Go | 1.27.1 | Builds Go-based Mason tools such as gopls and goimports |
 | Python | 3.12.13 | School-provided interpreter used by Neovim's installers; supports virtual environments |
@@ -141,7 +144,7 @@ Blink completion uses its Lua fuzzy matcher. It does not need a Rust toolchain. 
 
 ### 1. Pull your configuration from Git
 
-Repository: `https://github.com/nohgo/nvim.git`, branch `master`. Installation snapshot: commit `ddc45c7` (`Update and switch to slang`).
+Repository: `https://github.com/nohgo/nvim.git`, branch `master`. Current VM configuration: commit `a2441e8` (`Create the VAMS suite`), fast-forwarded from the original `ddc45c7` installation on 2026-10-15.
 
 On the VM:
 
@@ -230,7 +233,34 @@ A minimal example used successfully in our disposable cross-file test was:
 
 The current LSP config detects roots using `.git` and `.slang`. Indexing source directories allows Slang to find modules in separate files without adding Verilog `include` directives. Adapt directories and compilation settings to each actual project. See [Slang server configuration](https://hudson-trading.github.io/slang-server/start/config/).
 
-This installation provides digital Verilog/SystemVerilog checking. It does not add Verilog-AMS analog checking or simulation; that remains a separate Cadence/tool workflow.
+Slang provides digital Verilog/SystemVerilog checking. The separate AMS parser now supplies AMS syntax diagnostics and highlighting, with `vamsfmt` for formatting. Analog semantic checking and simulation remain separate Cadence/tool workflows; Cadence integration has not been tested on the VM.
+
+## VAMS suite update — 2026-10-15
+
+Pulled config commit `a2441e8` from your GitHub remote. The active AMS plugin is `nohgo/tree-sitter-verilog-ams`, locked to `0b2672e76ff2941fb62081b5d42b0ae84a0f6c46`. Its install hook compiled `parser/verilog_ams.so` using the existing native Tree-sitter CLI and system compiler.
+
+The config also needs the external `vamsfmt` executable, which Git pull and plugin installation do not install. Built version **0.1.0** from `https://github.com/nohgo/vamsfmt`, commit `12d74c0f993f078caec5f9175b5ba5cf1ddb1c6a`, using official Rust **1.90.0** in an isolated temporary directory and:
+
+```bash
+cargo build --release --locked --jobs 4
+```
+
+Only the finished executable was installed at `~/.local/bin/vamsfmt`. Its runtime dependencies resolved on RHEL 8. The temporary Rust toolchain, Cargo cache, source checkout, fixtures, and build outputs were removed after verification; no permanent Rust installation or shell initialization was added. Conform discovers this executable through Neovim's existing PATH.
+
+To update the formatter later, build the desired source revision with an appropriate temporary Rust toolchain, verify it on the VM, and replace `~/.local/bin/vamsfmt`. The source currently requires Rust 1.85 or newer. The `cargo install` example in `MIGRATION.md` is an alternative for a machine with a permanent Cargo installation; this VM intentionally keeps only the compiled executable. Updating the grammar plugin does not update the formatter.
+
+Validation completed using disposable files:
+
+- Startup loaded 23 plugins without a startup error; the existing parsers and the AMS parser loaded.
+- Slang still resolved `clk_div` from `clk_gen` across files without an `include`, with no diagnostics in the small digital fixture.
+- `.va`, `.vams`, and `.vah` selected `verilogams`, parsed successfully, and received Tree-sitter highlighting. Slang did not attach to these AMS buffers.
+- Conform formatting, repeat-format idempotence, and format-on-save worked with `vamsfmt`.
+- Invalid AMS source produced syntax diagnostics; rejected formatting left its text unchanged.
+- Telescope's native FZF extension and Blink's Lua backend still loaded.
+
+`xmvlog` was absent in the test shell, so `vim.g.enable_cadence` was false. Cadence checking, licensing, site include paths, and simulator behavior were intentionally not exercised. Starting Neovim from a properly configured Cadence shell can enable that integration.
+
+Update records, formatter source revision/checksum, and test logs are in `~/.local/state/nvim-update-2026-10-15-vams/`. Its verification script references deleted disposable fixtures and is a historical record, rather than a permanent test command.
 
 ## Checks after an update
 
@@ -284,13 +314,12 @@ Installation records are stored at:
   INSTALLATION.txt                  original installation notes
   TREE_SITTER_BUILD.txt             source/build and StyLua compatibility notes
   verification/                    test logs, health report, and test scripts
-  old-lazy-plugins/                 archived obsolete Lazy-managed plugins
-  old-lazy-state/                   archived Lazy state
+  LAZY-ARCHIVES-REMOVED.txt          records the requested removal of Lazy archives
 ```
 
 The manifest's `/tmp/...` paths identify staging locations used during installation. They no longer exist; the active locations are in the directory map above. Verification scripts are historical records and some refer to deleted test fixtures; they are not a ready-to-run permanent test suite.
 
-Old Lazy directories were **archived, not erased**. They are outside Neovim's active plugin path and are retained only for rollback. You can remove those two archived directories later if you no longer want the old installation. Conda's directory was removed. The temporary native build directory and temporary Rust environment were removed.
+The `old-lazy-plugins/` and `old-lazy-state/` rollback directories were **deleted at your request on 2026-10-15**, reclaiming approximately 111 MiB. They are no longer available for rollback. The config archive and other installation/verification records remain. Conda's directory and the temporary native build/Rust environments were also removed.
 
 For a bad future Neovim upgrade, restore the launcher to a previously retained versioned Neovim directory. For a plugin regression, restore the desired Git-tracked lockfile and use `vim.pack.update(nil, { target = 'lockfile' })`, review, and restart. For a bad config change, restore the selected config revision while preserving your edits.
 
