@@ -84,7 +84,7 @@
       "src": "https://github.com/folke/tokyonight.nvim"
     },
     "tree-sitter-verilog-ams": {
-      "rev": "0b2672e76ff2941fb62081b5d42b0ae84a0f6c46",
+      "rev": "92c803343d0e2f79475b28558655f6fbe207cebb",
       "src": "https://github.com/nohgo/tree-sitter-verilog-ams",
       "version": "'main'"
     },
